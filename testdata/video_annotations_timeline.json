@@ -1,0 +1,143 @@
+{
+    "00:00:00.000": {
+        "RoomType": "EntranceHall",
+        "Quality": 100
+    },
+    "00:00:01.690": {
+        "InterestValue": 100
+    },
+    "00:00:04.470": {
+        "RoomType": "SittingArea",
+        "Quality": 100
+    },
+    "00:00:06.940": {
+        "InterestValue": 100
+    },
+    "00:00:13.650": {
+        "RoomType": "Dining Area",
+        "Quality": 100
+    },
+    "00:00:14.920": {
+        "InterestValue": 100
+    },
+    "00:00:26.590": {
+        "InterestValue": 100
+    },
+    "00:00:31.200": {
+        "InterestValue": 100
+    },
+    "00:00:36.310": {
+        "RoomType": "Kitchen",
+        "Quality": 100
+    },
+    "00:00:43.670": {
+        "InterestValue": 100
+    },
+    "00:00:52.440": {
+        "RoomType": "LivingRoom",
+        "Quality": 100
+    },
+    "00:00:55.670": {
+        "InterestValue": 100
+    },
+    "00:01:02.120": {
+        "RoomType": "EntranceHall2",
+        "Quality": 100
+    },
+    "00:01:06.890": {
+        "RoomType": "Hall",
+        "Quality": 100
+    },
+    "00:01:12.030": {
+        "RoomType": "Toilet",
+        "Quality": 100
+    },
+    "00:01:12.031": {
+        "InterestValue": 100
+    },
+    "00:01:15.020": {
+        "RoomType": "Hall2",
+        "Quality": 100
+    },
+    "00:01:19.170": {
+        "RoomType": "Bedroom1",
+        "Quality": 100
+    },
+    "00:01:22.430": {
+        "InterestValue": 100
+    },
+    "00:01:31.830": {
+        "RoomType": "Bedroom2",
+        "Quality": 100
+    },
+    "00:01:35.300": {
+        "InterestValue": 100
+    },
+    "00:01:43.990": {
+        "RoomType": "Bathroom",
+        "Quality": 100
+    },
+    "00:01:47.880": {
+        "InterestValue": 100
+    },
+    "00:01:55.460": {
+        "RoomType": "Bedroom3",
+        "Quality": 100
+    },
+    "00:01:58.910": {
+        "InterestValue": 100
+    },
+    "00:02:04.860": {
+        "InterestValue": 100
+    },
+    "00:02:09.600": {
+        "RoomType": "Hall3",
+        "Quality": 100
+    },
+    "00:02:16.250": {
+        "RoomType": "EntranceHall3",
+        "Quality": 100
+    },
+    "00:02:19.680": {
+        "InterestValue": 100
+    },
+    "00:02:22.810": {
+        "RoomType": "Stairs",
+        "Quality": 100
+    },
+    "00:02:30.210": {
+        "RoomType": "NightHall",
+        "Quality": 100
+    },
+    "00:02:36.300": {
+        "InterestValue": 100
+    },
+    "00:02:42.750": {
+        "RoomType": "Bedroom4",
+        "Quality": 100
+    },
+    "00:02:47.890": {
+        "InterestValue": 100
+    },
+    "00:02:53.730": {
+        "RoomType": "NightHall2",
+        "Quality": 100
+    },
+    "00:02:58.590": {
+        "RoomType": "Dressing",
+        "Quality": 100
+    },
+    "00:03:03.850": {
+        "InterestValue": 100
+    },
+    "00:03:13.240": {
+        "RoomType": "NightHall3",
+        "Quality": 100
+    },
+    "00:03:17.900": {
+        "InterestValue": 100
+    },
+    "00:03:22.0": {
+        "EOF": "True"
+    }
+}
