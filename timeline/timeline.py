@@ -241,17 +241,28 @@ class Timeline:
 
     def insert_marker(self, name: str, value: Any, second: Decimal) -> None:
         """
-        Insert a marker at a specific timestamp.
+        Insert a marker at an existing timestamp.
 
-        Markers are stored with a 'marker_' prefix. If data already exists
-        at this timestamp, the marker is added to it.
+        Markers are stored with a 'marker_' prefix and added to the existing
+        data at the timestamp.
+
+        Args:
+            name: Marker name (will be prefixed with 'marker_')
+            value: Marker value
+            second: Timestamp that must already exist in the timeline
+
+        Raises:
+            KeyError: If the timestamp does not exist in the timeline
         """
+        # Convert to Decimal for consistent comparison
+        if not isinstance(second, Decimal):
+            second = Decimal(str(second))
+
+        if second not in self._data:
+            raise KeyError(f"Timestamp {second} does not exist in timeline")
+
         marker_key = f'marker_{name}'
-        if second in self._data:
-            self._data[second][marker_key] = value
-        else:
-            self._insert_key(second)
-            self._data[second] = {marker_key: value}
+        self._data[second][marker_key] = value
 
     @classmethod
     def append(cls, timelines: List['Timeline']) -> 'Timeline':

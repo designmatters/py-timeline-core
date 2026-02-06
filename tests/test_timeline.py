@@ -756,16 +756,16 @@ def test_insert_marker_preserves_existing_data():
     assert timeline.value_dict[D(1)]["marker_highlight"] is True
 
 
-def test_insert_marker_at_new_timestamp():
-    """Test inserting a marker at a new timestamp."""
+def test_insert_marker_at_nonexistent_timestamp_raises():
+    """Test that inserting a marker at a nonexistent timestamp raises KeyError."""
     timeline = Timeline.load_dict({
         "00:00:00.000": {"RoomType": "Hall"}
     })
 
-    timeline.insert_marker("cut", "start", D(0.5))
+    with pytest.raises(KeyError) as exc_info:
+        timeline.insert_marker("cut", "start", D(0.5))
 
-    assert D(0.5) in timeline.value_dict
-    assert timeline.value_dict[D(0.5)] == {"marker_cut": "start"}
+    assert "0.5" in str(exc_info.value)
 
 
 def test_insert_marker_updates_existing_marker():
