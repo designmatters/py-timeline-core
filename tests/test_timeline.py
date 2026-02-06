@@ -1,8 +1,13 @@
 import pytest
 import decimal
+import os
 
 from timeline.timeline import Timeline
 from testdata import video_annotations_timeline_dicts
+
+# Get the directory containing the tests
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(TEST_DIR)
 
 
 def D(value) -> decimal.Decimal:
@@ -10,7 +15,7 @@ def D(value) -> decimal.Decimal:
 
 
 def test_load_file_converts_timestamps_to_seconds():
-    timeline = Timeline.load_file('../testdata/video_annotations_timeline.json')
+    timeline = Timeline.load_file(os.path.join(PROJECT_ROOT, 'testdata/video_annotations_timeline.json'))
     assert timeline.value_dict[0.0] == {
         'RoomType': 'EntranceHall', 'Quality': 100}
     assert timeline.value_dict[D(1.69)] == {'InterestValue': 100}
@@ -683,43 +688,255 @@ def test_extract_by_attribute_range():
     }
 
 
-# def test_groupby():
-#     timeline = Timeline.load_dict(
-#         {
-#             "00:00:00.000": {
-#                 "RoomType": "Hall",
-#                 "Quality": 100,
-#                 "InterestValue": 58
-#             },
-#             "00:00:01.000": {
-#                 "RoomType": "LivingRoom",
-#                 "InterestValue": 30
-#             },
-#             "00:00:02.000": {
-#                 "RoomType": "LivingRoom",
-#                 "Quality": 100,
-#                 "InterestValue": 58
-#             },
-#             "00:00:03.000": {
-#                 "Quality": 95,
-#                 "InterestValue": 70
-#             },
-#             "00:00:04.000": {
-#                 "InterestValue": 50,
-#                 "RoomType": "Bedroom",
-#             },
-#             "00:00:05.000": {
-#                 "InterestValue": 70,
-#                 "RoomType": "Bedroom",
-#             },
-#             "00:00:06.000": {
-#                 "InterestValue": 70,
-#                 "RoomType": "Terras",
-#             }
-#         }
-#     )
-#
-#     result = timeline.groupby(attribute="RoomType")
-#
-#     assert len(result) == 4
-#
+def test_groupby():
+    timeline = Timeline.load_dict(
+        {
+            "00:00:00.000": {
+                "RoomType": "Hall",
+                "Quality": 100,
+                "InterestValue": 58
+            },
+            "00:00:01.000": {
+                "RoomType": "LivingRoom",
+                "InterestValue": 30
+            },
+            "00:00:02.000": {
+                "RoomType": "LivingRoom",
+                "Quality": 100,
+                "InterestValue": 58
+            },
+            "00:00:03.000": {
+                "Quality": 95,
+                "InterestValue": 70
+            },
+            "00:00:04.000": {
+                "InterestValue": 50,
+                "RoomType": "Bedroom",
+            },
+            "00:00:05.000": {
+                "InterestValue": 70,
+                "RoomType": "Bedroom",
+            },
+            "00:00:06.000": {
+                "InterestValue": 70,
+                "RoomType": "Terras",
+            }
+        }
+    )
+
+    result = timeline.group_by(attribute="RoomType")
+
+    assert len(result) == 4
+    assert result[0].attribute == "RoomType"
+    assert result[0].attribute_value == "Hall"
+    assert result[1].attribute_value == "LivingRoom"
+    assert result[2].attribute_value == "Bedroom"
+    assert result[3].attribute_value == "Terras"
+
+
+# ============================================================================
+# New tests for bug fixes and improvements
+# ============================================================================
+
+def test_insert_marker_preserves_existing_data():
+    """Test that insert_marker doesn't overwrite existing data at the timestamp."""
+    timeline = Timeline.load_dict({
+        "00:00:01.000": {
+            "RoomType": "LivingRoom",
+            "Quality": 100,
+        }
+    })
+
+    # Insert a marker at an existing timestamp
+    timeline.insert_marker("highlight", True, D(1))
+
+    # Both the original data and marker should exist
+    assert timeline.value_dict[D(1)]["RoomType"] == "LivingRoom"
+    assert timeline.value_dict[D(1)]["Quality"] == 100
+    assert timeline.value_dict[D(1)]["marker_highlight"] is True
+
+
+def test_insert_marker_at_new_timestamp():
+    """Test inserting a marker at a new timestamp."""
+    timeline = Timeline.load_dict({
+        "00:00:00.000": {"RoomType": "Hall"}
+    })
+
+    timeline.insert_marker("cut", "start", D(0.5))
+
+    assert D(0.5) in timeline.value_dict
+    assert timeline.value_dict[D(0.5)] == {"marker_cut": "start"}
+
+
+def test_insert_marker_updates_existing_marker():
+    """Test that inserting a marker with the same name updates its value."""
+    timeline = Timeline.load_dict({
+        "00:00:01.000": {"RoomType": "Hall"}
+    })
+
+    timeline.insert_marker("score", 50, D(1))
+    assert timeline.value_dict[D(1)]["marker_score"] == 50
+
+    timeline.insert_marker("score", 75, D(1))
+    assert timeline.value_dict[D(1)]["marker_score"] == 75
+
+
+def test_duration_with_unordered_insertion():
+    """Test that duration() returns correct value regardless of insertion order."""
+    # Insert in reverse order
+    timeline_data = {
+        "00:00:05.000": {"Event": "End"},
+        "00:00:00.000": {"Event": "Start"},
+        "00:00:02.500": {"Event": "Middle"},
+    }
+    timeline = Timeline.load_dict(timeline_data)
+
+    assert timeline.duration() == D(5)
+
+
+def test_duration_empty_timeline():
+    """Test that duration() returns 0 for empty timeline."""
+    timeline = Timeline()
+    assert timeline.duration() == D(0)
+
+
+def test_get_key_before_returns_none_for_early_timestamp():
+    """Test _get_key_before returns None when no key exists before timestamp."""
+    timeline = Timeline.load_dict({
+        "00:00:05.000": {"Event": "Start"}
+    })
+
+    # Ask for key before any data exists
+    result = timeline._get_key_before(D(2))
+    assert result is None
+
+
+def test_get_key_before_returns_exact_match():
+    """Test _get_key_before returns the key itself if it exists."""
+    timeline = Timeline.load_dict({
+        "00:00:05.000": {"Event": "Start"}
+    })
+
+    result = timeline._get_key_before(D(5))
+    assert result == D(5)
+
+
+def test_get_key_before_returns_previous_key():
+    """Test _get_key_before returns the largest key before the timestamp."""
+    timeline = Timeline.load_dict({
+        "00:00:01.000": {"Event": "A"},
+        "00:00:03.000": {"Event": "B"},
+        "00:00:05.000": {"Event": "C"},
+    })
+
+    result = timeline._get_key_before(D(4))
+    assert result == D(3)
+
+
+def test_get_key_before_empty_timeline():
+    """Test _get_key_before returns None for empty timeline."""
+    timeline = Timeline()
+    assert timeline._get_key_before(D(1)) is None
+
+
+def test_repr_empty():
+    """Test __repr__ for empty timeline."""
+    timeline = Timeline()
+    assert repr(timeline) == "Timeline(empty)"
+
+
+def test_repr_with_data():
+    """Test __repr__ for timeline with data."""
+    timeline = Timeline.load_dict({
+        "00:00:00.000": {"A": 1},
+        "00:00:01.000": {"B": 2},
+        "00:00:02.000": {"C": 3},
+    })
+    assert "Timeline(entries=3, duration=" in repr(timeline)
+    assert "2" in repr(timeline)
+
+
+def test_contains():
+    """Test __contains__ for checking if timestamp exists."""
+    timeline = Timeline.load_dict({
+        "00:00:01.000": {"A": 1},
+        "00:00:02.000": {"B": 2},
+    })
+
+    assert D(1) in timeline
+    assert D(2) in timeline
+    assert D(1.5) not in timeline
+    assert D(0) not in timeline
+
+
+def test_set_new_timestamp():
+    """Test set() method for adding data at new timestamp."""
+    timeline = Timeline()
+    timeline.set(D(1), {"RoomType": "Kitchen"})
+
+    assert D(1) in timeline
+    assert timeline.value_dict[D(1)] == {"RoomType": "Kitchen"}
+
+
+def test_set_existing_timestamp_merges_data():
+    """Test set() method merges data at existing timestamp."""
+    timeline = Timeline.load_dict({
+        "00:00:01.000": {"RoomType": "Kitchen", "Quality": 80}
+    })
+
+    timeline.set(D(1), {"Quality": 100, "Lighting": 50})
+
+    assert timeline.value_dict[D(1)] == {
+        "RoomType": "Kitchen",
+        "Quality": 100,
+        "Lighting": 50
+    }
+
+
+def test_iteration_is_sorted():
+    """Test that iteration yields timestamps in sorted order."""
+    # Insert in random order
+    timeline_data = {
+        "00:00:03.000": {"C": 3},
+        "00:00:01.000": {"A": 1},
+        "00:00:05.000": {"E": 5},
+        "00:00:02.000": {"B": 2},
+        "00:00:04.000": {"D": 4},
+    }
+    timeline = Timeline.load_dict(timeline_data)
+
+    timestamps = list(timeline)
+    expected = [D(1), D(2), D(3), D(4), D(5)]
+    assert timestamps == expected
+
+
+def test_getitem_before_any_data():
+    """Test that __getitem__ returns empty dict for timestamp before any data."""
+    timeline = Timeline.load_dict({
+        "00:00:05.000": {"Event": "Start"}
+    })
+
+    # Query before first entry
+    assert timeline[D(2)] == {}
+
+
+def test_getitem_empty_timeline():
+    """Test that __getitem__ returns empty dict for empty timeline."""
+    timeline = Timeline()
+    assert timeline[D(1)] == {}
+
+
+def test_value_dict_setter_rebuilds_sorted_keys():
+    """Test that setting value_dict rebuilds the sorted keys."""
+    timeline = Timeline()
+
+    # Directly set value_dict (backwards compatibility)
+    timeline.value_dict = {
+        D(3): {"C": 3},
+        D(1): {"A": 1},
+        D(2): {"B": 2},
+    }
+
+    # Iteration should still be sorted
+    assert list(timeline) == [D(1), D(2), D(3)]
+    assert timeline.duration() == D(3)
